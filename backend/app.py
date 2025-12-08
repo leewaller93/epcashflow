@@ -437,7 +437,6 @@ def get_forecast():
                 stage_amount = float(stage.get('amount', 0))
                 stage_start_str = stage.get('start_date', '')
                 stage_end_str = stage.get('end_date', '')
-                stage_months = int(stage.get('months', 1))
                 
                 if not stage_start_str or not stage_end_str or stage_amount == 0:
                     continue
@@ -445,6 +444,13 @@ def get_forecast():
                 try:
                     stage_start = datetime.strptime(stage_start_str, '%Y-%m-%d')
                     stage_end = datetime.strptime(stage_end_str, '%Y-%m-%d')
+                    
+                    # Calculate actual months between start and end dates for Progress billing
+                    stage_start_month = stage_start.replace(day=1)
+                    stage_end_month = stage_end.replace(day=1)
+                    actual_months = (stage_end_month.year - stage_start_month.year) * 12 + (stage_end_month.month - stage_start_month.month) + 1
+                    if actual_months <= 0:
+                        actual_months = 1
                     
                     # Calculate invoice dates based on invoice type
                     invoice_dates = []
@@ -456,6 +462,7 @@ def get_forecast():
                         invoice_amounts.append(stage_amount)
                     elif invoice_type == 'Monthly':
                         # Monthly invoices from start to end
+                        stage_months = int(stage.get('months', actual_months))
                         current = stage_start.replace(day=1)
                         monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
                         while current <= stage_end:
@@ -466,20 +473,21 @@ def get_forecast():
                             else:
                                 current = current.replace(month=current.month + 1)
                     else:  # Progress
+                        # Progress billing: calculate months from dates, split amount evenly
                         # Check if monthly_breakdown exists for this stage
                         if monthly_breakdown:
                             # Use monthly_breakdown allocations if available
-                            current = stage_start.replace(day=1)
+                            current = stage_start_month
                             month_index = 0
-                            while current <= stage_end and month_index < stage_months:
+                            while current <= stage_end_month and month_index < actual_months:
                                 # Get amount from monthly_breakdown if available
                                 month_key = str(month_index)
                                 if month_key in monthly_breakdown:
                                     month_data = monthly_breakdown[month_key]
                                     invoice_amount = float(month_data.get('dollars', 0))
                                 else:
-                                    # Fallback to even distribution
-                                    invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                                    # Fallback to even distribution across calculated months
+                                    invoice_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
                                 
                                 invoice_dates.append(current)
                                 invoice_amounts.append(invoice_amount)
@@ -489,11 +497,11 @@ def get_forecast():
                                 else:
                                     current = current.replace(month=current.month + 1)
                         else:
-                            # Distribute evenly across months in stage (default)
-                            monthly_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
-                            current = stage_start.replace(day=1)
+                            # Distribute evenly across calculated months (Progress billing formula)
+                            monthly_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
+                            current = stage_start_month
                             month_count = 0
-                            while current <= stage_end and month_count < stage_months:
+                            while current <= stage_end_month and month_count < actual_months:
                                 invoice_dates.append(current)
                                 invoice_amounts.append(monthly_amount)
                                 month_count += 1
@@ -893,7 +901,6 @@ def get_dashboard():
                     stage_amount = float(stage.get('amount', 0))
                     stage_start_str = stage.get('start_date', '')
                     stage_end_str = stage.get('end_date', '')
-                    stage_months = int(stage.get('months', 1))
                     
                     if not stage_start_str or not stage_end_str or stage_amount == 0:
                         continue
@@ -902,7 +909,7 @@ def get_dashboard():
                         stage_start = datetime.strptime(stage_start_str, '%Y-%m-%d')
                         stage_end = datetime.strptime(stage_end_str, '%Y-%m-%d')
                         
-                        # Calculate actual months in stage period
+                        # Calculate actual months in stage period (Progress billing formula)
                         stage_start_month = stage_start.replace(day=1)
                         stage_end_month = stage_end.replace(day=1)
                         actual_months = (stage_end_month.year - stage_start_month.year) * 12 + (stage_end_month.month - stage_start_month.month) + 1
@@ -919,8 +926,9 @@ def get_dashboard():
                             invoice_amounts.append(stage_amount)
                         elif invoice_type == 'Monthly':
                             # Monthly invoices from start to end
+                            stage_months = int(stage.get('months', actual_months))
                             invoice_month = stage_start_month
-                            monthly_invoice_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
+                            monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
                             while invoice_month <= stage_end_month:
                                 invoice_dates.append(invoice_month)
                                 invoice_amounts.append(monthly_invoice_amount)
@@ -929,6 +937,7 @@ def get_dashboard():
                                 else:
                                     invoice_month = invoice_month.replace(month=invoice_month.month + 1)
                         else:  # Progress
+                            # Progress billing: calculate months from dates, split amount evenly
                             # Check if monthly_breakdown exists for this stage
                             if monthly_breakdown:
                                 # Use monthly_breakdown allocations if available
@@ -941,7 +950,7 @@ def get_dashboard():
                                         month_data = monthly_breakdown[month_key]
                                         invoice_amount = float(month_data.get('dollars', 0))
                                     else:
-                                        # Fallback to even distribution
+                                        # Fallback to even distribution across calculated months
                                         invoice_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
                                     
                                     invoice_dates.append(invoice_month)
@@ -952,10 +961,10 @@ def get_dashboard():
                                     else:
                                         invoice_month = invoice_month.replace(month=invoice_month.month + 1)
                             else:
-                                # Distribute evenly across actual months in stage (default)
+                                # Progress billing formula: split amount evenly across calculated months
+                                monthly_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
                                 invoice_month = stage_start_month
                                 month_count = 0
-                                monthly_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
                                 while invoice_month <= stage_end_month and month_count < actual_months:
                                     invoice_dates.append(invoice_month)
                                     invoice_amounts.append(monthly_amount)
