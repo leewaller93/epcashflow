@@ -1020,6 +1020,16 @@ function ContractForm({ onBack, contract, isEditing = false }) {
               </button>
             </div>
 
+            {/* Project Dates Reference */}
+            {formData.start_date && formData.end_date && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="text-sm font-medium text-green-900">Project Dates:</div>
+                <div className="text-sm text-green-700">
+                  Start: {new Date(formData.start_date).toLocaleDateString()} | End: {new Date(formData.end_date).toLocaleDateString()}
+                </div>
+              </div>
+            )}
+
             {/* Last Stage Reference */}
             {stages.length > 0 && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
