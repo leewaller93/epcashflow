@@ -6,8 +6,7 @@ import GenerateCashFlowForm from './components/GenerateCashFlowForm';
 import ForecastTable from './components/ForecastTable';
 import ActualsForm from './components/ActualsForm';
 import Dashboard from './components/Dashboard';
-import Stages from './components/Stages';
-import ProjectTypes from './components/ProjectTypes';
+import Admin from './components/Admin';
 
 function App() {
   const [currentView, setCurrentView] = useState('welcome');
@@ -51,10 +50,8 @@ function App() {
         return <ActualsForm />;
       case 'dashboard':
         return <Dashboard />;
-      case 'stages':
-        return <Stages onBack={() => setCurrentView('welcome')} />;
-      case 'project-types':
-        return <ProjectTypes onBack={() => setCurrentView('welcome')} />;
+      case 'admin':
+        return <Admin onBack={() => setCurrentView('welcome')} />;
       default:
         return <WelcomeScreen onNavigate={setCurrentView} />;
     }
@@ -66,8 +63,7 @@ function App() {
     { id: 'forecast', label: 'Forecast', icon: '📊' },
     { id: 'actuals', label: 'Actuals', icon: '📈' },
     { id: 'dashboard', label: 'Dashboard', icon: '📉' },
-    { id: 'stages', label: 'Stages', icon: '📋' },
-    { id: 'project-types', label: 'Project Types', icon: '🏗️' },
+    { id: 'admin', label: 'Admin', icon: '⚙️' },
   ];
 
   return (

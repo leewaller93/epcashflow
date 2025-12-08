@@ -47,18 +47,18 @@ function WelcomeScreen({ onNavigate }) {
             </button>
           </div>
 
-          {/* Manage Stages Button */}
+          {/* Admin Area Button */}
           <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-300">
-            <div className="text-6xl mb-4">📋</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Manage Stages</h2>
+            <div className="text-6xl mb-4">⚙️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Area</h2>
             <p className="text-gray-600 mb-6">
-              Add, edit, and manage project stages for contracts
+              Manage project stages and project types for contracts
             </p>
             <button
-              onClick={() => onNavigate('stages')}
+              onClick={() => onNavigate('admin')}
               className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-200"
             >
-              Manage Stages
+              Admin Area
             </button>
           </div>
         </div>
