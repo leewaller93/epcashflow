@@ -9,7 +9,14 @@ from openpyxl.utils import get_column_letter
 import io
 
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to allow requests from frontend
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Database initialization
 def init_db():
@@ -482,10 +489,12 @@ def get_stages():
 
 @app.route('/api/stages', methods=['POST'])
 def create_stage():
+    conn = None
     try:
         data = request.json
+        print(f"Received POST /api/stages with data: {data}")
         
-        if not data.get('stage_name'):
+        if not data or not data.get('stage_name'):
             return jsonify({'error': 'Stage name is required'}), 400
         
         conn = sqlite3.connect('database.db')
@@ -505,14 +514,21 @@ def create_stage():
         stage_id = cursor.lastrowid
         
         conn.commit()
-        conn.close()
+        print(f"Stage created successfully with ID: {stage_id}")
         
         return jsonify({'id': stage_id, 'message': 'Stage created successfully'}), 201
         
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        print(f"IntegrityError: {e}")
         return jsonify({'error': 'Stage name already exists'}), 400
     except Exception as e:
+        print(f"Error creating stage: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 @app.route('/api/stages/<int:stage_id>', methods=['DELETE'])
 def delete_stage(stage_id):
@@ -576,10 +592,12 @@ def get_project_types():
 
 @app.route('/api/project-types', methods=['POST'])
 def create_project_type():
+    conn = None
     try:
         data = request.json
+        print(f"Received POST /api/project-types with data: {data}")
         
-        if not data.get('type_name'):
+        if not data or not data.get('type_name'):
             return jsonify({'error': 'Project type name is required'}), 400
         
         conn = sqlite3.connect('database.db')
@@ -599,14 +617,21 @@ def create_project_type():
         type_id = cursor.lastrowid
         
         conn.commit()
-        conn.close()
+        print(f"Project type created successfully with ID: {type_id}")
         
         return jsonify({'id': type_id, 'message': 'Project type created successfully'}), 201
         
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
+        print(f"IntegrityError: {e}")
         return jsonify({'error': 'Project type name already exists'}), 400
     except Exception as e:
+        print(f"Error creating project type: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 @app.route('/api/project-types/<int:type_id>', methods=['DELETE'])
 def delete_project_type(type_id):
