@@ -424,6 +424,14 @@ def get_forecast():
             for key in monthly_keys:
                 monthly_values[key] = 0
             
+            # Check if monthly_breakdown exists for Progress billing (legacy support)
+            monthly_breakdown = {}
+            if invoice_type == 'Progress' and contract.get('monthly_breakdown'):
+                try:
+                    monthly_breakdown = json.loads(contract['monthly_breakdown'])
+                except:
+                    monthly_breakdown = {}
+            
             # Calculate receipts for each stage
             for stage in stages:
                 stage_amount = float(stage.get('amount', 0))
@@ -440,43 +448,71 @@ def get_forecast():
                     
                     # Calculate invoice dates based on invoice type
                     invoice_dates = []
+                    invoice_amounts = []  # Store amounts per invoice for Progress with monthly_breakdown
                     
                     if invoice_type == 'Milestone':
                         # Single invoice at end date
                         invoice_dates.append(stage_end)
+                        invoice_amounts.append(stage_amount)
                     elif invoice_type == 'Monthly':
                         # Monthly invoices from start to end
                         current = stage_start.replace(day=1)
+                        monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
                         while current <= stage_end:
                             invoice_dates.append(current)
+                            invoice_amounts.append(monthly_invoice_amount)
                             if current.month == 12:
                                 current = current.replace(year=current.year + 1, month=1)
                             else:
                                 current = current.replace(month=current.month + 1)
                     else:  # Progress
-                        # Distribute across months in stage
-                        monthly_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
-                        current = stage_start.replace(day=1)
-                        month_count = 0
-                        while current <= stage_end and month_count < stage_months:
-                            invoice_dates.append(current)
-                            month_count += 1
-                            if current.month == 12:
-                                current = current.replace(year=current.year + 1, month=1)
-                            else:
-                                current = current.replace(month=current.month + 1)
+                        # Check if monthly_breakdown exists for this stage
+                        if monthly_breakdown:
+                            # Use monthly_breakdown allocations if available
+                            current = stage_start.replace(day=1)
+                            month_index = 0
+                            while current <= stage_end and month_index < stage_months:
+                                # Get amount from monthly_breakdown if available
+                                month_key = str(month_index)
+                                if month_key in monthly_breakdown:
+                                    month_data = monthly_breakdown[month_key]
+                                    invoice_amount = float(month_data.get('dollars', 0))
+                                else:
+                                    # Fallback to even distribution
+                                    invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                                
+                                invoice_dates.append(current)
+                                invoice_amounts.append(invoice_amount)
+                                month_index += 1
+                                if current.month == 12:
+                                    current = current.replace(year=current.year + 1, month=1)
+                                else:
+                                    current = current.replace(month=current.month + 1)
+                        else:
+                            # Distribute evenly across months in stage (default)
+                            monthly_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                            current = stage_start.replace(day=1)
+                            month_count = 0
+                            while current <= stage_end and month_count < stage_months:
+                                invoice_dates.append(current)
+                                invoice_amounts.append(monthly_amount)
+                                month_count += 1
+                                if current.month == 12:
+                                    current = current.replace(year=current.year + 1, month=1)
+                                else:
+                                    current = current.replace(month=current.month + 1)
                     
                     # Calculate receipt dates (invoice date + payment terms)
-                    for invoice_date in invoice_dates:
+                    for i, invoice_date in enumerate(invoice_dates):
                         receipt_date = invoice_date + timedelta(days=payment_terms)
                         receipt_month_key = receipt_date.strftime('%Y-%m')
                         
-                        # Calculate amount per invoice
-                        if invoice_type == 'Milestone':
+                        # Get invoice amount (use stored amount if available, otherwise calculate)
+                        if i < len(invoice_amounts):
+                            invoice_amount = invoice_amounts[i]
+                        elif invoice_type == 'Milestone':
                             invoice_amount = stage_amount
-                        elif invoice_type == 'Monthly':
-                            invoice_amount = stage_amount / len(invoice_dates) if len(invoice_dates) > 0 else 0
-                        else:  # Progress
+                        else:
                             invoice_amount = stage_amount / len(invoice_dates) if len(invoice_dates) > 0 else 0
                         
                         # Add to monthly values if within our forecast range
@@ -844,6 +880,14 @@ def get_dashboard():
                     except:
                         stages = []
                 
+                # Check if monthly_breakdown exists for Progress billing (legacy support)
+                monthly_breakdown = {}
+                if invoice_type == 'Progress' and contract.get('monthly_breakdown'):
+                    try:
+                        monthly_breakdown = json.loads(contract['monthly_breakdown'])
+                    except:
+                        monthly_breakdown = {}
+                
                 # Calculate invoices and receipts for each stage
                 for stage in stages:
                     stage_amount = float(stage.get('amount', 0))
@@ -867,41 +911,72 @@ def get_dashboard():
                         
                         # Calculate invoice dates based on invoice type
                         invoice_dates = []
+                        invoice_amounts = []  # Store amounts per invoice for Progress with monthly_breakdown
                         
                         if invoice_type == 'Milestone':
                             # Single invoice at end date
                             invoice_dates.append(stage_end.replace(day=1))
+                            invoice_amounts.append(stage_amount)
                         elif invoice_type == 'Monthly':
                             # Monthly invoices from start to end
                             invoice_month = stage_start_month
+                            monthly_invoice_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
                             while invoice_month <= stage_end_month:
                                 invoice_dates.append(invoice_month)
+                                invoice_amounts.append(monthly_invoice_amount)
                                 if invoice_month.month == 12:
                                     invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
                                 else:
                                     invoice_month = invoice_month.replace(month=invoice_month.month + 1)
                         else:  # Progress
-                            # Distribute across actual months in stage
-                            invoice_month = stage_start_month
-                            month_count = 0
-                            while invoice_month <= stage_end_month and month_count < actual_months:
-                                invoice_dates.append(invoice_month)
-                                month_count += 1
-                                if invoice_month.month == 12:
-                                    invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
-                                else:
-                                    invoice_month = invoice_month.replace(month=invoice_month.month + 1)
+                            # Check if monthly_breakdown exists for this stage
+                            if monthly_breakdown:
+                                # Use monthly_breakdown allocations if available
+                                invoice_month = stage_start_month
+                                month_index = 0
+                                while invoice_month <= stage_end_month and month_index < actual_months:
+                                    # Get amount from monthly_breakdown if available
+                                    month_key = str(month_index)
+                                    if month_key in monthly_breakdown:
+                                        month_data = monthly_breakdown[month_key]
+                                        invoice_amount = float(month_data.get('dollars', 0))
+                                    else:
+                                        # Fallback to even distribution
+                                        invoice_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
+                                    
+                                    invoice_dates.append(invoice_month)
+                                    invoice_amounts.append(invoice_amount)
+                                    month_index += 1
+                                    if invoice_month.month == 12:
+                                        invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
+                                    else:
+                                        invoice_month = invoice_month.replace(month=invoice_month.month + 1)
+                            else:
+                                # Distribute evenly across actual months in stage (default)
+                                invoice_month = stage_start_month
+                                month_count = 0
+                                monthly_amount = stage_amount / actual_months if actual_months > 0 else stage_amount
+                                while invoice_month <= stage_end_month and month_count < actual_months:
+                                    invoice_dates.append(invoice_month)
+                                    invoice_amounts.append(monthly_amount)
+                                    month_count += 1
+                                    if invoice_month.month == 12:
+                                        invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
+                                    else:
+                                        invoice_month = invoice_month.replace(month=invoice_month.month + 1)
                         
                         # Process each invoice date
-                        for invoice_date in invoice_dates:
+                        for i, invoice_date in enumerate(invoice_dates):
+                            # Get invoice amount (use stored amount if available, otherwise calculate)
+                            if i < len(invoice_amounts):
+                                invoice_amount = invoice_amounts[i]
+                            elif invoice_type == 'Milestone':
+                                invoice_amount = stage_amount
+                            else:
+                                invoice_amount = stage_amount / len(invoice_dates) if len(invoice_dates) > 0 else 0
+                            
                             # Check if this invoice is in the current month
                             if invoice_date == current_month:
-                                # Calculate invoice amount
-                                if invoice_type == 'Milestone':
-                                    invoice_amount = stage_amount
-                                else:
-                                    invoice_amount = stage_amount / len(invoice_dates) if len(invoice_dates) > 0 else 0
-                                
                                 # Add to invoices for this month
                                 month_data['invoices'] += invoice_amount
                                 
@@ -919,11 +994,8 @@ def get_dashboard():
                             
                             # Check if receipt is in the current month
                             if receipt_month == current_month:
-                                # Calculate receipt amount (same as invoice amount)
-                                if invoice_type == 'Milestone':
-                                    receipt_amount = stage_amount
-                                else:
-                                    receipt_amount = stage_amount / len(invoice_dates) if len(invoice_dates) > 0 else 0
+                                # Receipt amount is same as invoice amount
+                                receipt_amount = invoice_amount
                                 
                                 # Add to receipts for this month
                                 month_data['receipts'] += receipt_amount
