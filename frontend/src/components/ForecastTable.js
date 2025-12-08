@@ -7,11 +7,20 @@ function ForecastTable() {
   const [selectedProjectType, setSelectedProjectType] = useState('All');
 
   const projectTypes = ['All', 'MEP', 'HAS', 'SM', 'FS'];
-  const monthlyDates = [
-    'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025',
-    'Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026',
-    'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026'
-  ];
+  
+  // Generate next 12 months dynamically
+  const generateMonthlyDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      dates.push(`${monthNames[date.getMonth()]} ${date.getFullYear()}`);
+    }
+    return dates;
+  };
+  
+  const monthlyDates = generateMonthlyDates();
 
   useEffect(() => {
     loadForecastData();
