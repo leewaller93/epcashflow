@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function ActualsForm() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ function ActualsForm() {
 
   const loadContracts = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:3001/api/contracts');
+      const response = await axios.get(`${API_URL}/api/contracts`);
       setContracts(response.data.contracts || []);
     } catch (error) {
       console.error('Error loading contracts:', error);
@@ -32,7 +33,7 @@ function ActualsForm() {
 
   const loadActuals = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:3001/api/actuals');
+      const response = await axios.get(`${API_URL}/api/actuals`);
       setActuals(response.data.actuals || []);
     } catch (error) {
       console.error('Error loading actuals:', error);
@@ -53,7 +54,7 @@ function ActualsForm() {
     setMessage('');
 
     try {
-      await axios.post('http://127.0.0.1:3001/api/actuals', formData);
+      await axios.post(`${API_URL}/api/actuals`, formData);
       setMessage('✅ Actuals recorded successfully!');
       setFormData({
         project_id: '',

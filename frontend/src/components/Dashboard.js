@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -63,7 +64,7 @@ function Dashboard() {
 
   const fetchProjectTypes = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/project-types');
+      const response = await axios.get(`${API_URL}/api/project-types`);
       setAvailableProjectTypes(response.data);
     } catch (error) {
       console.error('Error fetching project types:', error);
@@ -76,7 +77,7 @@ function Dashboard() {
       console.log('Loading dashboard with filters:', { selectedProjectTypes, startDate, endDate, viewType });
       
       // Build URL with filters
-      let url = `http://localhost:3001/api/dashboard?view_type=${viewType}`;
+      let url = `${API_URL}/api/dashboard?view_type=${viewType}`;
       
       // Handle project type filter
       if (selectedProjectTypes.includes('All') || selectedProjectTypes.length === 0) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function GenerateCashFlowForm({ onBack }) {
   const [selectedProjectType, setSelectedProjectType] = useState('All');
@@ -13,7 +14,7 @@ function GenerateCashFlowForm({ onBack }) {
     setMessage('Generating ongoing Excel report...');
 
     try {
-      const response = await axios.get(`http://127.0.0.1:3001/api/download?project_type=${selectedProjectType}`, {
+      const response = await axios.get(`${API_URL}/api/download?project_type=${selectedProjectType}`, {
         responseType: 'blob'
       });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function ContractsList({ onViewContract, onAddNewContract }) {
   const [contracts, setContracts] = useState([]);
@@ -29,7 +30,7 @@ function ContractsList({ onViewContract, onAddNewContract }) {
         ...(filters.invoice_type !== 'All' && { invoice_type: filters.invoice_type })
       });
 
-      const response = await axios.get(`http://127.0.0.1:3001/api/contracts?${params}`);
+      const response = await axios.get(`${API_URL}/api/contracts?${params}`);
       setContracts(response.data.contracts);
       setTotalPages(response.data.total_pages);
     } catch (error) {
@@ -53,7 +54,7 @@ function ContractsList({ onViewContract, onAddNewContract }) {
   const handleDeleteContract = async (contract) => {
     if (window.confirm(`Are you sure you want to delete contract "${contract.project_name || contract.project_id}"?`)) {
       try {
-        await axios.delete(`http://localhost:3001/api/contracts/${contract.project_id}`);
+        await axios.delete(`${API_URL}/api/contracts/${contract.project_id}`);
         setMessage('✅ Contract deleted successfully!');
         loadContracts(); // Reload the list
       } catch (error) {

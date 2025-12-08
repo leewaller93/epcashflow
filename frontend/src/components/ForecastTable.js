@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function ForecastTable() {
   const [forecastData, setForecastData] = useState([]);
@@ -18,7 +19,7 @@ function ForecastTable() {
 
   const loadForecastData = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:3001/api/forecast?project_type=${selectedProjectType}`);
+      const response = await axios.get(`${API_URL}/api/forecast?project_type=${selectedProjectType}`);
       setForecastData(response.data);
     } catch (error) {
       console.error('Error loading forecast data:', error);

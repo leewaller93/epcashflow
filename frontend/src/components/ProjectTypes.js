@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function ProjectTypes({ onBack }) {
   const [projectTypes, setProjectTypes] = useState([]);
@@ -13,7 +14,7 @@ function ProjectTypes({ onBack }) {
 
   const fetchProjectTypes = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/project-types');
+      const response = await axios.get(`${API_URL}/api/project-types`);
       setProjectTypes(response.data);
     } catch (error) {
       console.error('Error fetching project types:', error);
@@ -30,7 +31,7 @@ function ProjectTypes({ onBack }) {
 
     setIsLoading(true);
     try {
-      await axios.post('http://localhost:3001/api/project-types', {
+      await axios.post(`${API_URL}/api/project-types`, {
         type_name: newTypeName.trim()
       });
       
@@ -55,7 +56,7 @@ function ProjectTypes({ onBack }) {
     }
 
     try {
-      await axios.delete(`http://localhost:3001/api/project-types/${typeId}`);
+      await axios.delete(`${API_URL}/api/project-types/${typeId}`);
       setMessage('✅ Project type deleted successfully!');
       fetchProjectTypes();
     } catch (error) {

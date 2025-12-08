@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function ContractForm({ onBack, contract, isEditing = false }) {
   const [formData, setFormData] = useState({
@@ -221,7 +222,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
 
   const fetchAvailableStages = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/stages');
+      const response = await axios.get(`${API_URL}/api/stages`);
       setAvailableStages(response.data);
     } catch (error) {
       console.error('Error fetching stages:', error);
@@ -230,7 +231,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
 
   const fetchAvailableProjectTypes = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/project-types');
+      const response = await axios.get(`${API_URL}/api/project-types`);
       setAvailableProjectTypes(response.data);
     } catch (error) {
       console.error('Error fetching project types:', error);
@@ -426,11 +427,11 @@ function ContractForm({ onBack, contract, isEditing = false }) {
 
       // Only update if we have a valid contract with project_id
       if (isEditing && contract && contract.project_id) {
-        await axios.put(`http://localhost:3001/api/contracts/${contract.project_id}`, contractData);
+        await axios.put(`${API_URL}/api/contracts/${contract.project_id}`, contractData);
         setMessage('✅ Contract updated successfully!');
       } else {
         // Always create new contract if not editing or no valid contract
-        await axios.post('http://localhost:3001/api/contracts', contractData);
+        await axios.post(`${API_URL}/api/contracts`, contractData);
         setMessage('✅ Contract added successfully!');
       }
 

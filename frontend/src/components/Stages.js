@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 
 function Stages({ onBack }) {
   const [stages, setStages] = useState([]);
@@ -13,7 +14,7 @@ function Stages({ onBack }) {
 
   const fetchStages = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/stages');
+      const response = await axios.get(`${API_URL}/api/stages`);
       setStages(response.data);
     } catch (error) {
       console.error('Error fetching stages:', error);
@@ -30,7 +31,7 @@ function Stages({ onBack }) {
 
     setIsLoading(true);
     try {
-      await axios.post('http://localhost:3001/api/stages', {
+      await axios.post(`${API_URL}/api/stages`, {
         stage_name: newStageName.trim()
       });
       
@@ -55,7 +56,7 @@ function Stages({ onBack }) {
     }
 
     try {
-      await axios.delete(`http://localhost:3001/api/stages/${stageId}`);
+      await axios.delete(`${API_URL}/api/stages/${stageId}`);
       setMessage('✅ Stage deleted successfully!');
       fetchStages();
     } catch (error) {
