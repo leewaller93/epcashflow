@@ -1,0 +1,9 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Ignore everything except important files
+*
+
+# But don't ignore these important files
+!requirements.txt
+!app.py
+!runtime.txt
+!__init__.py
