@@ -354,7 +354,6 @@ function ContractForm({ onBack, contract, isEditing = false }) {
     
     const startDate = new Date(stage.start_date + 'T00:00:00');
     const amount = parseFloat(stage.amount);
-    const months = parseInt(stage.months) || 1;
     
     if (formData.contract_invoice_type === 'Milestone') {
       // Single invoice on end date
@@ -366,6 +365,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
     } else if (formData.contract_invoice_type === 'Monthly') {
       // Monthly billing - use monthly breakdown if available, otherwise calculate from amount/months
       const invoices = [];
+      const months = parseInt(stage.months) || 1;
       const monthlyAmount = parseFloat(monthlyBreakdown.monthlyAmount) || (amount / months);
       const numberOfMonths = parseFloat(monthlyBreakdown.numberOfMonths) || months;
       
@@ -380,13 +380,27 @@ function ContractForm({ onBack, contract, isEditing = false }) {
       
       return invoices;
     } else {
-      // Progress billing - distribute across months
-      const invoices = [];
-      const monthlyAmount = amount / months;
+      // Progress billing - calculate months from start and end dates, then split amount evenly
+      if (!stage.end_date) return [];
       
-      for (let i = 0; i < months; i++) {
+      const endDate = new Date(stage.end_date + 'T00:00:00');
+      
+      // Calculate actual months between start and end dates
+      const startMonth = startDate.getFullYear() * 12 + startDate.getMonth();
+      const endMonth = endDate.getFullYear() * 12 + endDate.getMonth();
+      const actualMonths = (endMonth - startMonth) + 1; // +1 to include both start and end months
+      
+      if (actualMonths <= 0) return [];
+      
+      // Split amount evenly across calculated months
+      const invoices = [];
+      const monthlyAmount = amount / actualMonths;
+      
+      // Generate invoice dates for each month from start to end
+      for (let i = 0; i < actualMonths; i++) {
         const invoiceDate = new Date(startDate);
         invoiceDate.setMonth(invoiceDate.getMonth() + i);
+        invoiceDate.setDate(1); // First day of each month
         invoices.push({
           date: invoiceDate,
           amount: monthlyAmount
