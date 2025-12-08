@@ -62,22 +62,6 @@ function WelcomeScreen({ onNavigate }) {
             </button>
           </div>
         </div>
-
-        {/* Quick Stats */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-indigo-600">20+</div>
-            <div className="text-gray-600">Active Projects</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-green-600">4</div>
-            <div className="text-gray-600">Project Types</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-blue-600">3</div>
-            <div className="text-gray-600">Invoice Types</div>
-          </div>
-        </div>
       </div>
     </div>
   );
