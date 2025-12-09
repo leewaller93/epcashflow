@@ -430,10 +430,29 @@ function ContractForm({ onBack, contract, isEditing = false }) {
         months: parseInt(stage.months) || 1
       }));
 
+      // Prepare monthly_breakdown for Monthly invoice type
+      let monthly_breakdown = null;
+      if (formData.contract_invoice_type === 'Monthly' && monthlyBreakdown.monthlyAmount && monthlyBreakdown.numberOfMonths) {
+        // Create monthly breakdown structure
+        const breakdown = {};
+        const monthlyAmount = parseFloat(monthlyBreakdown.monthlyAmount) || 0;
+        const numberOfMonths = parseInt(monthlyBreakdown.numberOfMonths) || 0;
+        
+        // Create breakdown for each month
+        for (let i = 0; i < numberOfMonths; i++) {
+          breakdown[i] = {
+            dollars: monthlyAmount,
+            hours: 0
+          };
+        }
+        monthly_breakdown = JSON.stringify(breakdown);
+      }
+
       const contractData = {
         ...formData,
         total_value: parseFloat(formData.total_value) || 0,
-        stages: JSON.stringify(formattedStages)
+        stages: JSON.stringify(formattedStages),
+        monthly_breakdown: monthly_breakdown || formData.monthly_breakdown || null
       };
 
       console.log('Saving contract with stages:', formattedStages);
