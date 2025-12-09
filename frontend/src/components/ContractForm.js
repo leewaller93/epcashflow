@@ -449,8 +449,11 @@ function ContractForm({ onBack, contract, isEditing = false }) {
         setMessage('✅ Contract added successfully!');
       }
 
+      // Refresh contracts list before going back
       setTimeout(() => {
         onBack();
+        // Trigger a page reload or refresh if onBack doesn't refresh
+        window.location.reload();
       }, 1500);
     } catch (error) {
       console.error('Error saving contract:', error);
