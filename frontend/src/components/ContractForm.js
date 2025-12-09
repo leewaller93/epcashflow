@@ -467,6 +467,19 @@ function ContractForm({ onBack, contract, isEditing = false }) {
     }).format(amount);
   };
 
+  // Format date as local date (avoid timezone conversion issues)
+  const formatDateLocal = (dateString) => {
+    if (!dateString) return '';
+    // Parse YYYY-MM-DD format as local date, not UTC
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: '2-digit',
@@ -1039,7 +1052,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
               <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="text-sm font-medium text-green-900">Project Dates:</div>
                 <div className="text-sm text-green-700">
-                  Start: {new Date(formData.start_date).toLocaleDateString()} | End: {new Date(formData.end_date).toLocaleDateString()}
+                  Start: {formatDateLocal(formData.start_date)} | End: {formatDateLocal(formData.end_date)}
                 </div>
               </div>
             )}
@@ -1049,7 +1062,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="text-sm font-medium text-blue-900">Last Stage:</div>
                 <div className="text-sm text-blue-700">
-                  {stages[stages.length - 1].stage_name} - Ends: {stages[stages.length - 1].end_date ? new Date(stages[stages.length - 1].end_date).toLocaleDateString() : 'Not set'}
+                  {stages[stages.length - 1].stage_name} - Ends: {stages[stages.length - 1].end_date ? formatDateLocal(stages[stages.length - 1].end_date) : 'Not set'}
                 </div>
               </div>
             )}
