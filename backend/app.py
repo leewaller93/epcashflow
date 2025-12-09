@@ -187,9 +187,18 @@ def create_contract():
         conn.commit()
         conn.close()
         
+        print(f"Contract created successfully: project_id={data.get('project_id')}, id={contract_id}")
         return jsonify({'id': contract_id, 'message': 'Contract created successfully'}), 201
         
+    except sqlite3.IntegrityError as e:
+        error_msg = str(e)
+        if 'UNIQUE constraint' in error_msg:
+            return jsonify({'error': f'Contract with project_id "{data.get("project_id")}" already exists'}), 400
+        return jsonify({'error': f'Database constraint error: {error_msg}'}), 400
     except Exception as e:
+        print(f"Error creating contract: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/contracts/<project_id>', methods=['PUT'])

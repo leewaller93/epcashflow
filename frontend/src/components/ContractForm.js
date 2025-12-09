@@ -457,7 +457,9 @@ function ContractForm({ onBack, contract, isEditing = false }) {
       }, 1500);
     } catch (error) {
       console.error('Error saving contract:', error);
-      setMessage('❌ Error saving contract. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      setMessage(`❌ Error saving contract: ${errorMessage}`);
+      console.error('Full error details:', error.response?.data);
     } finally {
       setIsLoading(false);
     }
