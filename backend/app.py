@@ -388,6 +388,7 @@ def get_forecast():
         from datetime import datetime, timedelta
         
         project_type = request.args.get('project_type', 'All')
+        fiscal_year = request.args.get('fiscal_year', 'Current')
         
         # Connect to database
         conn = sqlite3.connect('database.db')
@@ -406,15 +407,41 @@ def get_forecast():
         # Generate forecast data for each contract
         forecast_data = []
         
-        # Generate next 12 months from current date
+        # Generate months based on fiscal year selection
         today = datetime.now()
         monthly_dates = []
         monthly_keys = []
-        for i in range(12):
-            month_date = today.replace(day=1) + timedelta(days=32*i)
-            month_date = month_date.replace(day=1)
-            monthly_dates.append(month_date.strftime('%b %Y'))
-            monthly_keys.append(month_date.strftime('%Y-%m'))
+        
+        if fiscal_year == 'Current':
+            # Current: next 12 months from today
+            for i in range(12):
+                month_date = today.replace(day=1) + timedelta(days=32*i)
+                month_date = month_date.replace(day=1)
+                monthly_dates.append(month_date.strftime('%b %Y'))
+                monthly_keys.append(month_date.strftime('%Y-%m'))
+        else:
+            # Fiscal year: FY26 = 2026, FY27 = 2027, etc.
+            # Extract year from fiscal_year (e.g., "FY26" -> 2026)
+            try:
+                year_str = fiscal_year.replace('FY', '')
+                # Handle 2-digit years (FY26 = 2026) and 4-digit years (FY2026 = 2026)
+                if len(year_str) == 2:
+                    year = 2000 + int(year_str)
+                else:
+                    year = int(year_str)
+                
+                # Generate 12 months for the fiscal year (Jan - Dec)
+                for month in range(1, 13):
+                    month_date = datetime(year, month, 1)
+                    monthly_dates.append(month_date.strftime('%b %Y'))
+                    monthly_keys.append(month_date.strftime('%Y-%m'))
+            except (ValueError, TypeError):
+                # Fallback to current if invalid fiscal year
+                for i in range(12):
+                    month_date = today.replace(day=1) + timedelta(days=32*i)
+                    month_date = month_date.replace(day=1)
+                    monthly_dates.append(month_date.strftime('%b %Y'))
+                    monthly_keys.append(month_date.strftime('%Y-%m'))
         
         for contract in contracts:
             payment_terms = int(contract.get('net_payment_terms', 30))
@@ -629,7 +656,12 @@ def get_forecast():
             
             forecast_data.append(forecast_entry)
         
-        return jsonify(forecast_data)
+        # Return forecast data with monthly dates for reference
+        return jsonify({
+            'monthly_dates': monthly_dates,
+            'monthly_keys': monthly_keys,
+            'forecast_data': forecast_data
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

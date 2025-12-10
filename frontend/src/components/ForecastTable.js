@@ -5,31 +5,75 @@ import API_URL from '../config';
 function ForecastTable() {
   const [forecastData, setForecastData] = useState([]);
   const [selectedProjectType, setSelectedProjectType] = useState('All');
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState('Current');
+  const [monthlyDates, setMonthlyDates] = useState([]);
 
   const projectTypes = ['All', 'MEP', 'HAS', 'SM', 'FS'];
   
-  // Generate next 12 months dynamically
-  const generateMonthlyDates = () => {
-    const dates = [];
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      dates.push(`${monthNames[date.getMonth()]} ${date.getFullYear()}`);
+  // Generate fiscal year options (Current, FY26, FY27, etc.)
+  const generateFiscalYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const options = ['Current'];
+    
+    // Generate FY options from current year - 1 to current year + 5
+    for (let year = currentYear - 1; year <= currentYear + 5; year++) {
+      const fyYear = year.toString().slice(-2); // Get last 2 digits (e.g., 2026 -> 26)
+      options.push(`FY${fyYear}`);
     }
+    
+    return options;
+  };
+
+  const fiscalYearOptions = generateFiscalYearOptions();
+
+  // Generate monthly dates based on fiscal year selection
+  const generateMonthlyDates = (fiscalYear) => {
+    const dates = [];
+    
+    if (fiscalYear === 'Current') {
+      // Current: next 12 months from today
+      const today = new Date();
+      for (let i = 0; i < 12; i++) {
+        const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        dates.push(`${monthNames[date.getMonth()]} ${date.getFullYear()}`);
+      }
+    } else {
+      // Fiscal year: FY26 = 2026, FY27 = 2027, etc.
+      const yearStr = fiscalYear.replace('FY', '');
+      const year = yearStr.length === 2 ? 2000 + parseInt(yearStr) : parseInt(yearStr);
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      for (let month = 0; month < 12; month++) {
+        dates.push(`${monthNames[month]} ${year}`);
+      }
+    }
+    
     return dates;
   };
-  
-  const monthlyDates = generateMonthlyDates();
+
+  useEffect(() => {
+    // Update monthly dates when fiscal year changes
+    setMonthlyDates(generateMonthlyDates(selectedFiscalYear));
+  }, [selectedFiscalYear]);
 
   useEffect(() => {
     loadForecastData();
-  }, [selectedProjectType]);
+  }, [selectedProjectType, selectedFiscalYear]);
 
   const loadForecastData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/forecast?project_type=${selectedProjectType}`);
-      setForecastData(response.data);
+      const response = await axios.get(`${API_URL}/api/forecast?project_type=${selectedProjectType}&fiscal_year=${selectedFiscalYear}`);
+      // Handle both old format (array) and new format (object with forecast_data)
+      if (Array.isArray(response.data)) {
+        setForecastData(response.data);
+      } else {
+        setForecastData(response.data.forecast_data || []);
+        // Use backend monthly dates if provided
+        if (response.data.monthly_dates && response.data.monthly_dates.length > 0) {
+          setMonthlyDates(response.data.monthly_dates);
+        }
+      }
     } catch (error) {
       console.error('Error loading forecast data:', error);
     }
@@ -66,17 +110,30 @@ function ForecastTable() {
       <div className="bg-white rounded-lg shadow-lg p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900">📊 Cash Flow Forecast</h1>
-          <select
-            value={selectedProjectType}
-            onChange={(e) => setSelectedProjectType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            {projectTypes.map(type => (
-              <option key={type} value={type}>
-                {type === 'All' ? 'All Project Types' : type}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-3">
+            <select
+              value={selectedFiscalYear}
+              onChange={(e) => setSelectedFiscalYear(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              {fiscalYearOptions.map(fy => (
+                <option key={fy} value={fy}>
+                  {fy === 'Current' ? 'Current (Next 12 Months)' : fy}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedProjectType}
+              onChange={(e) => setSelectedProjectType(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              {projectTypes.map(type => (
+                <option key={type} value={type}>
+                  {type === 'All' ? 'All Project Types' : type}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
