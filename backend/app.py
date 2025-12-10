@@ -433,9 +433,9 @@ def get_forecast():
             for key in monthly_keys:
                 monthly_values[key] = 0
             
-            # Check if monthly_breakdown exists for Progress billing (legacy support)
+            # Check if monthly_breakdown exists for Progress or Monthly billing
             monthly_breakdown = {}
-            if invoice_type == 'Progress' and contract.get('monthly_breakdown'):
+            if contract.get('monthly_breakdown') and (invoice_type == 'Progress' or invoice_type == 'Monthly'):
                 try:
                     monthly_breakdown = json.loads(contract['monthly_breakdown'])
                 except:
@@ -471,16 +471,41 @@ def get_forecast():
                         invoice_amounts.append(stage_amount)
                     elif invoice_type == 'Monthly':
                         # Monthly invoices from start to end
-                        stage_months = int(stage.get('months', actual_months))
-                        current = stage_start.replace(day=1)
-                        monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
-                        while current <= stage_end:
-                            invoice_dates.append(current)
-                            invoice_amounts.append(monthly_invoice_amount)
-                            if current.month == 12:
-                                current = current.replace(year=current.year + 1, month=1)
-                            else:
-                                current = current.replace(month=current.month + 1)
+                        # Use monthly_breakdown if available, otherwise calculate from stage
+                        if monthly_breakdown:
+                            # Use monthly_breakdown allocations
+                            current = stage_start.replace(day=1)
+                            month_index = 0
+                            while current <= stage_end and month_index < len(monthly_breakdown):
+                                # Get amount from monthly_breakdown if available
+                                month_key = str(month_index)
+                                if month_key in monthly_breakdown:
+                                    month_data = monthly_breakdown[month_key]
+                                    invoice_amount = float(month_data.get('dollars', 0))
+                                else:
+                                    # Fallback to even distribution
+                                    stage_months = int(stage.get('months', actual_months))
+                                    invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                                
+                                invoice_dates.append(current)
+                                invoice_amounts.append(invoice_amount)
+                                month_index += 1
+                                if current.month == 12:
+                                    current = current.replace(year=current.year + 1, month=1)
+                                else:
+                                    current = current.replace(month=current.month + 1)
+                        else:
+                            # Fallback: calculate from stage amount and months
+                            stage_months = int(stage.get('months', actual_months))
+                            current = stage_start.replace(day=1)
+                            monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                            while current <= stage_end:
+                                invoice_dates.append(current)
+                                invoice_amounts.append(monthly_invoice_amount)
+                                if current.month == 12:
+                                    current = current.replace(year=current.year + 1, month=1)
+                                else:
+                                    current = current.replace(month=current.month + 1)
                     else:  # Progress
                         # Progress billing: calculate months from dates, split amount evenly
                         # Check if monthly_breakdown exists for this stage
@@ -897,9 +922,9 @@ def get_dashboard():
                     except:
                         stages = []
                 
-                # Check if monthly_breakdown exists for Progress billing (legacy support)
+                # Check if monthly_breakdown exists for Progress or Monthly billing
                 monthly_breakdown = {}
-                if invoice_type == 'Progress' and contract.get('monthly_breakdown'):
+                if contract.get('monthly_breakdown') and (invoice_type == 'Progress' or invoice_type == 'Monthly'):
                     try:
                         monthly_breakdown = json.loads(contract['monthly_breakdown'])
                     except:
@@ -935,16 +960,41 @@ def get_dashboard():
                             invoice_amounts.append(stage_amount)
                         elif invoice_type == 'Monthly':
                             # Monthly invoices from start to end
-                            stage_months = int(stage.get('months', actual_months))
-                            invoice_month = stage_start_month
-                            monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
-                            while invoice_month <= stage_end_month:
-                                invoice_dates.append(invoice_month)
-                                invoice_amounts.append(monthly_invoice_amount)
-                                if invoice_month.month == 12:
-                                    invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
-                                else:
-                                    invoice_month = invoice_month.replace(month=invoice_month.month + 1)
+                            # Use monthly_breakdown if available, otherwise calculate from stage
+                            if monthly_breakdown:
+                                # Use monthly_breakdown allocations
+                                invoice_month = stage_start_month
+                                month_index = 0
+                                while invoice_month <= stage_end_month and month_index < len(monthly_breakdown):
+                                    # Get amount from monthly_breakdown if available
+                                    month_key = str(month_index)
+                                    if month_key in monthly_breakdown:
+                                        month_data = monthly_breakdown[month_key]
+                                        invoice_amount = float(month_data.get('dollars', 0))
+                                    else:
+                                        # Fallback to even distribution
+                                        stage_months = int(stage.get('months', actual_months))
+                                        invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                                    
+                                    invoice_dates.append(invoice_month)
+                                    invoice_amounts.append(invoice_amount)
+                                    month_index += 1
+                                    if invoice_month.month == 12:
+                                        invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
+                                    else:
+                                        invoice_month = invoice_month.replace(month=invoice_month.month + 1)
+                            else:
+                                # Fallback: calculate from stage amount and months
+                                stage_months = int(stage.get('months', actual_months))
+                                invoice_month = stage_start_month
+                                monthly_invoice_amount = stage_amount / stage_months if stage_months > 0 else stage_amount
+                                while invoice_month <= stage_end_month:
+                                    invoice_dates.append(invoice_month)
+                                    invoice_amounts.append(monthly_invoice_amount)
+                                    if invoice_month.month == 12:
+                                        invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
+                                    else:
+                                        invoice_month = invoice_month.replace(month=invoice_month.month + 1)
                         else:  # Progress
                             # Progress billing: calculate months from dates, split amount evenly
                             # Check if monthly_breakdown exists for this stage
