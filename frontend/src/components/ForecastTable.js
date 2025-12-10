@@ -114,114 +114,114 @@ function ForecastTable() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">📊 Cash Flow Forecast</h1>
-          <div className="flex gap-3">
+    <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
+        {/* Header Section - More Compact */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">📊 Cash Flow Forecast</h1>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <select
               value={selectedFiscalYear}
               onChange={(e) => setSelectedFiscalYear(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
             >
               {fiscalYearOptions.map(fy => (
                 <option key={fy} value={fy}>
-                  {fy === 'Current' ? 'Current (Next 12 Months)' : fy}
+                  {fy === 'Current' ? 'Current (12 Months)' : fy}
                 </option>
               ))}
             </select>
             <select
               value={selectedProjectType}
               onChange={(e) => setSelectedProjectType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white"
             >
               {projectTypes.map(type => (
                 <option key={type} value={type}>
-                  {type === 'All' ? 'All Project Types' : type}
+                  {type === 'All' ? 'All Types' : type}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">
-                <strong>Forecast Information:</strong> This table shows projected monthly invoiced amounts for each project. 
-                Amounts are shown in the month when invoices are sent (not when payments are received). 
-                The forecast is based on your contract monthly breakdowns and invoice schedules.
-              </p>
-            </div>
-          </div>
+        {/* Compact Info Banner */}
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4 rounded-r">
+          <p className="text-xs sm:text-sm text-blue-700">
+            <strong>Note:</strong> Shows invoiced amounts by month (when invoices are sent, not when payments are received).
+          </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Project
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Invoice Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Value
-                </th>
-                {monthlyDates.map(date => (
-                  <th key={date} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {date}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {forecastData.map((project) => (
-                <tr key={project.project_id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {project.project_name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {project.project_id}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getProjectTypeColor(project.project_type)}`}>
-                      {project.project_type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getInvoiceTypeColor(project.contract_invoice_type)}`}>
-                      {project.contract_invoice_type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatCurrency(project.total_value)}
-                  </td>
-                  {monthlyDates.map((date, index) => {
-                    const receiptAmount = project.monthly_values[index] || 0;
-                    return (
-                      <td key={date} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {receiptAmount > 0 ? formatCurrency(receiptAmount) : '-'}
+        {/* Table with Better Spacing */}
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Project
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Invoice
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total
+                    </th>
+                    {monthlyDates.map(date => (
+                      <th key={date} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[75px]">
+                        {date}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {forecastData.map((project) => (
+                    <tr key={project.project_id} className="hover:bg-gray-50">
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
+                            {project.project_name}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">
+                            {project.project_id}
+                          </div>
+                        </div>
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <td className="px-2 py-3 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getProjectTypeColor(project.project_type)}`}>
+                          {project.project_type}
+                        </span>
+                      </td>
+                      <td className="px-2 py-3 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getInvoiceTypeColor(project.contract_invoice_type)}`}>
+                          {project.contract_invoice_type}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {formatCurrency(project.total_value)}
+                      </td>
+                      {monthlyDates.map((date, index) => {
+                        const receiptAmount = project.monthly_values[index] || 0;
+                        return (
+                          <td key={date} className="px-2 py-3 text-center text-sm text-gray-900 whitespace-nowrap">
+                            {receiptAmount > 0 ? (
+                              <span className="font-medium">{formatCurrency(receiptAmount)}</span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         {forecastData.length === 0 && (
