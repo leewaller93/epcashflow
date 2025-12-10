@@ -265,9 +265,13 @@ function ContractForm({ onBack, contract, isEditing = false }) {
   };
 
   const openStageModal = () => {
-    // Set start date to end date of last stage if exists
-    const lastStage = stages[stages.length - 1];
-    const startDate = lastStage && lastStage.end_date ? lastStage.end_date : '';
+    // Set start date to end date of stage with latest end date (chronologically last)
+    const lastStageByDate = stages.reduce((latest, stage) => {
+      if (!stage.end_date) return latest;
+      if (!latest || !latest.end_date) return stage;
+      return new Date(stage.end_date) > new Date(latest.end_date) ? stage : latest;
+    }, null);
+    const startDate = lastStageByDate && lastStageByDate.end_date ? lastStageByDate.end_date : '';
     
     setNewStage({
       stage_name: '',
@@ -1089,14 +1093,23 @@ function ContractForm({ onBack, contract, isEditing = false }) {
             )}
 
             {/* Last Stage Reference */}
-            {stages.length > 0 && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="text-sm font-medium text-blue-900">Last Stage:</div>
-                <div className="text-sm text-blue-700">
-                  {stages[stages.length - 1].stage_name} - Ends: {stages[stages.length - 1].end_date ? formatDateLocal(stages[stages.length - 1].end_date) : 'Not set'}
+            {stages.length > 0 && (() => {
+              // Find stage with latest end date (chronologically last)
+              const lastStageByDate = stages.reduce((latest, stage) => {
+                if (!stage.end_date) return latest;
+                if (!latest || !latest.end_date) return stage;
+                return new Date(stage.end_date) > new Date(latest.end_date) ? stage : latest;
+              }, null);
+              
+              return lastStageByDate ? (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm font-medium text-blue-900">Last Stage:</div>
+                  <div className="text-sm text-blue-700">
+                    {lastStageByDate.stage_name} - Ends: {lastStageByDate.end_date ? formatDateLocal(lastStageByDate.end_date) : 'Not set'}
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : null;
+            })()}
 
             <div className="space-y-4">
               <div>
