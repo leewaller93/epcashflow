@@ -202,9 +202,10 @@ function ContractForm({ onBack, contract, isEditing = false }) {
         account_number: contract.account_number || ''
       });
       
-      // Ensure stages have proper default values
-      const formattedStages = contractStages.map(stage => ({
+      // Ensure stages have proper default values and IDs
+      const formattedStages = contractStages.map((stage, index) => ({
         ...stage,
+        id: stage.id || Date.now() + index, // Ensure each stage has an ID
         months: parseInt(stage.months) || 1,
         amount: parseFloat(stage.amount) || 0
       }));
@@ -316,9 +317,9 @@ function ContractForm({ onBack, contract, isEditing = false }) {
     setStages(prev => [...prev, newStage]);
   };
 
-  const updateStage = (index, field, value) => {
-    setStages(prev => prev.map((stage, i) => {
-      if (i !== index) return stage;
+  const updateStage = (stageId, field, value) => {
+    setStages(prev => prev.map((stage) => {
+      if (stage.id !== stageId) return stage;
       
       const updatedStage = { ...stage, [field]: value };
       
@@ -345,8 +346,8 @@ function ContractForm({ onBack, contract, isEditing = false }) {
     }));
   };
 
-  const removeStage = (index) => {
-    setStages(prev => prev.filter((_, i) => i !== index));
+  const removeStage = (stageId) => {
+    setStages(prev => prev.filter((stage) => stage.id !== stageId));
   };
 
   const calculateInvoiceDates = (stage) => {
@@ -925,13 +926,19 @@ function ContractForm({ onBack, contract, isEditing = false }) {
                 <p className="text-gray-500 text-center py-8">No stages added yet. Click "Add Stage" to begin.</p>
               ) : (
                 <div className="space-y-4">
-                  {stages.map((stage, index) => (
-                    <div key={stage.id} className="border border-gray-200 rounded-lg p-4">
+                  {[...stages].sort((a, b) => {
+                    // Sort by start_date chronologically
+                    if (!a.start_date && !b.start_date) return 0;
+                    if (!a.start_date) return 1;
+                    if (!b.start_date) return -1;
+                    return new Date(a.start_date) - new Date(b.start_date);
+                  }).map((stage, index) => (
+                    <div key={stage.id || index} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-md font-medium text-gray-900">Stage {index + 1}</h4>
+                        <h4 className="text-md font-medium text-gray-900">{stage.stage_name || 'Stage'}</h4>
                          <button
                            type="button"
-                          onClick={() => removeStage(index)}
+                          onClick={() => removeStage(stage.id)}
                           className="text-red-600 hover:text-red-800"
                          >
                            Remove
@@ -943,7 +950,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
                           <label className="block text-xs text-gray-600 mb-1">Stage</label>
                           <select
                             value={stage.stage_name}
-                            onChange={(e) => updateStage(index, 'stage_name', e.target.value)}
+                            onChange={(e) => updateStage(stage.id, 'stage_name', e.target.value)}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           >
                             <option value="">Select Stage</option>
@@ -958,7 +965,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
                           <input
                             type="date"
                             value={stage.start_date}
-                            onChange={(e) => updateStage(index, 'start_date', e.target.value)}
+                            onChange={(e) => updateStage(stage.id, 'start_date', e.target.value)}
                             className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
                             style={{ minWidth: '120px' }}
                           />
@@ -969,7 +976,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
                           <input
                             type="date"
                             value={stage.end_date}
-                            onChange={(e) => updateStage(index, 'end_date', e.target.value)}
+                            onChange={(e) => updateStage(stage.id, 'end_date', e.target.value)}
                             className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
                             style={{ minWidth: '120px' }}
                           />
@@ -980,7 +987,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
                           <input
                             type="number"
                             value={stage.months || 1}
-                            onChange={(e) => updateStage(index, 'months', parseInt(e.target.value) || 1)}
+                            onChange={(e) => updateStage(stage.id, 'months', parseInt(e.target.value) || 1)}
                             min="1"
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           />
@@ -991,7 +998,7 @@ function ContractForm({ onBack, contract, isEditing = false }) {
                             <input
                               type="number"
                             value={stage.amount}
-                            onChange={(e) => updateStage(index, 'amount', e.target.value)}
+                            onChange={(e) => updateStage(stage.id, 'amount', e.target.value)}
                             min="0"
                             step="0.01"
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
