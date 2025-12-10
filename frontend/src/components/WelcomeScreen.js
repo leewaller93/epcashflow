@@ -6,14 +6,8 @@ function WelcomeScreen({ onNavigate }) {
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            💰 Lee Cash Flow
+            💰 PHG Contract Forecast
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Contract Management & Cash Flow Forecasting System
-          </p>
-          <p className="text-gray-500 mb-12">
-            Manage your medical equipment planning projects and generate ongoing Excel reports
-          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
