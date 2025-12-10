@@ -6,7 +6,6 @@ function ForecastTable() {
   const [forecastData, setForecastData] = useState([]);
   const [selectedProjectType, setSelectedProjectType] = useState('All');
   const [selectedFiscalYear, setSelectedFiscalYear] = useState('Current');
-  const [monthlyDates, setMonthlyDates] = useState([]);
 
   const projectTypes = ['All', 'MEP', 'HAS', 'SM', 'FS'];
   
@@ -52,6 +51,9 @@ function ForecastTable() {
     return dates;
   };
 
+  // Initialize monthly dates with current selection
+  const [monthlyDates, setMonthlyDates] = useState(() => generateMonthlyDates('Current'));
+
   useEffect(() => {
     // Update monthly dates when fiscal year changes
     setMonthlyDates(generateMonthlyDates(selectedFiscalYear));
@@ -66,12 +68,18 @@ function ForecastTable() {
       const response = await axios.get(`${API_URL}/api/forecast?project_type=${selectedProjectType}&fiscal_year=${selectedFiscalYear}`);
       // Handle both old format (array) and new format (object with forecast_data)
       if (Array.isArray(response.data)) {
+        // Old format - use frontend-generated dates
         setForecastData(response.data);
+        setMonthlyDates(generateMonthlyDates(selectedFiscalYear));
       } else {
+        // New format - use backend dates
         setForecastData(response.data.forecast_data || []);
         // Use backend monthly dates if provided
         if (response.data.monthly_dates && response.data.monthly_dates.length > 0) {
           setMonthlyDates(response.data.monthly_dates);
+        } else {
+          // Fallback to frontend-generated dates
+          setMonthlyDates(generateMonthlyDates(selectedFiscalYear));
         }
       }
     } catch (error) {
