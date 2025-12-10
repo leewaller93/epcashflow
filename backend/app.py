@@ -474,19 +474,18 @@ def get_forecast():
                             else:
                                 current = current.replace(month=current.month + 1)
                         
-                        # Calculate receipt dates (invoice date + payment terms)
+                        # Use invoice dates (not receipt dates) for forecast display
                         for i, invoice_date in enumerate(invoice_dates):
-                            receipt_date = invoice_date + timedelta(days=payment_terms)
-                            receipt_month_key = receipt_date.strftime('%Y-%m')
+                            invoice_month_key = invoice_date.strftime('%Y-%m')
                             
                             if i < len(invoice_amounts):
                                 invoice_amount = invoice_amounts[i]
                             else:
                                 invoice_amount = 0
                             
-                            # Add to monthly values if within our forecast range
-                            if receipt_month_key in monthly_values:
-                                monthly_values[receipt_month_key] += invoice_amount
+                            # Add to monthly values if within our forecast range (using invoice month)
+                            if invoice_month_key in monthly_values:
+                                monthly_values[invoice_month_key] += invoice_amount
                     except (ValueError, TypeError) as e:
                         print(f"Error processing Monthly contract without stages: {e}")
             
@@ -593,10 +592,9 @@ def get_forecast():
                                 else:
                                     current = current.replace(month=current.month + 1)
                     
-                    # Calculate receipt dates (invoice date + payment terms)
+                    # Use invoice dates (not receipt dates) for forecast display
                     for i, invoice_date in enumerate(invoice_dates):
-                        receipt_date = invoice_date + timedelta(days=payment_terms)
-                        receipt_month_key = receipt_date.strftime('%Y-%m')
+                        invoice_month_key = invoice_date.strftime('%Y-%m')
                         
                         # Get invoice amount (use stored amount if available, otherwise calculate)
                         if i < len(invoice_amounts):
@@ -606,9 +604,9 @@ def get_forecast():
                         else:
                             invoice_amount = stage_amount / len(invoice_dates) if len(invoice_dates) > 0 else 0
                         
-                        # Add to monthly values if within our forecast range
-                        if receipt_month_key in monthly_values:
-                            monthly_values[receipt_month_key] += invoice_amount
+                        # Add to monthly values if within our forecast range (using invoice month)
+                        if invoice_month_key in monthly_values:
+                            monthly_values[invoice_month_key] += invoice_amount
                             
                 except (ValueError, TypeError) as e:
                     print(f"Error processing stage: {e}")

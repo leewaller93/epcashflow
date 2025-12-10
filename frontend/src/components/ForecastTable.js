@@ -88,8 +88,8 @@ function ForecastTable() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                <strong>Forecast Information:</strong> This table shows projected monthly cash receipts for each project. 
-                Receipts are calculated with net 30 payment terms (30 days after invoice date). 
+                <strong>Forecast Information:</strong> This table shows projected monthly invoiced amounts for each project. 
+                Amounts are shown in the month when invoices are sent (not when payments are received). 
                 The forecast is based on your contract monthly breakdowns and invoice schedules.
               </p>
             </div>
