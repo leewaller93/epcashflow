@@ -441,6 +441,55 @@ def get_forecast():
                 except:
                     monthly_breakdown = {}
             
+            # Handle Monthly invoice type contracts without stages (use contract dates directly)
+            if invoice_type == 'Monthly' and monthly_breakdown and len(stages) == 0:
+                # Use contract dates directly for Monthly invoices without stages
+                contract_start_str = contract.get('start_date', '')
+                contract_end_str = contract.get('end_date', '')
+                
+                if contract_start_str and contract_end_str:
+                    try:
+                        contract_start = datetime.strptime(contract_start_str, '%Y-%m-%d')
+                        contract_end = datetime.strptime(contract_end_str, '%Y-%m-%d')
+                        contract_start_month = contract_start.replace(day=1)
+                        contract_end_month = contract_end.replace(day=1)
+                        
+                        # Generate invoice dates from monthly_breakdown
+                        invoice_dates = []
+                        invoice_amounts = []
+                        current = contract_start_month
+                        month_index = 0
+                        
+                        while current <= contract_end_month and month_index < len(monthly_breakdown):
+                            month_key = str(month_index)
+                            if month_key in monthly_breakdown:
+                                month_data = monthly_breakdown[month_key]
+                                invoice_amount = float(month_data.get('dollars', 0))
+                                invoice_dates.append(current)
+                                invoice_amounts.append(invoice_amount)
+                            
+                            month_index += 1
+                            if current.month == 12:
+                                current = current.replace(year=current.year + 1, month=1)
+                            else:
+                                current = current.replace(month=current.month + 1)
+                        
+                        # Calculate receipt dates (invoice date + payment terms)
+                        for i, invoice_date in enumerate(invoice_dates):
+                            receipt_date = invoice_date + timedelta(days=payment_terms)
+                            receipt_month_key = receipt_date.strftime('%Y-%m')
+                            
+                            if i < len(invoice_amounts):
+                                invoice_amount = invoice_amounts[i]
+                            else:
+                                invoice_amount = 0
+                            
+                            # Add to monthly values if within our forecast range
+                            if receipt_month_key in monthly_values:
+                                monthly_values[receipt_month_key] += invoice_amount
+                    except (ValueError, TypeError) as e:
+                        print(f"Error processing Monthly contract without stages: {e}")
+            
             # Calculate receipts for each stage
             for stage in stages:
                 stage_amount = float(stage.get('amount', 0))
@@ -929,6 +978,68 @@ def get_dashboard():
                         monthly_breakdown = json.loads(contract['monthly_breakdown'])
                     except:
                         monthly_breakdown = {}
+                
+                # Handle Monthly invoice type contracts without stages (use contract dates directly)
+                if invoice_type == 'Monthly' and monthly_breakdown and len(stages) == 0:
+                    # Use contract dates directly for Monthly invoices without stages
+                    contract_start_str = contract.get('start_date', '')
+                    contract_end_str = contract.get('end_date', '')
+                    
+                    if contract_start_str and contract_end_str:
+                        try:
+                            contract_start = datetime.strptime(contract_start_str, '%Y-%m-%d')
+                            contract_end = datetime.strptime(contract_end_str, '%Y-%m-%d')
+                            contract_start_month = contract_start.replace(day=1)
+                            contract_end_month = contract_end.replace(day=1)
+                            
+                            # Generate invoice dates from monthly_breakdown
+                            invoice_dates = []
+                            invoice_amounts = []
+                            invoice_month = contract_start_month
+                            month_index = 0
+                            
+                            while invoice_month <= contract_end_month and month_index < len(monthly_breakdown):
+                                month_key = str(month_index)
+                                if month_key in monthly_breakdown:
+                                    month_data = monthly_breakdown[month_key]
+                                    invoice_amount = float(month_data.get('dollars', 0))
+                                    invoice_dates.append(invoice_month)
+                                    invoice_amounts.append(invoice_amount)
+                                
+                                month_index += 1
+                                if invoice_month.month == 12:
+                                    invoice_month = invoice_month.replace(year=invoice_month.year + 1, month=1)
+                                else:
+                                    invoice_month = invoice_month.replace(month=invoice_month.month + 1)
+                            
+                            # Process each invoice date
+                            for i, invoice_date in enumerate(invoice_dates):
+                                if i < len(invoice_amounts):
+                                    invoice_amount = invoice_amounts[i]
+                                else:
+                                    invoice_amount = 0
+                                
+                                # Check if this invoice is in the current month
+                                if invoice_date == current_month:
+                                    # Add to invoices for this month
+                                    month_data['invoices'] += invoice_amount
+                                    if contract_type not in month_data['by_project_type']:
+                                        month_data['by_project_type'][contract_type] = {'invoices': 0, 'receipts': 0}
+                                    month_data['by_project_type'][contract_type]['invoices'] += invoice_amount
+                                
+                                # Calculate receipt date (invoice date + payment terms)
+                                receipt_date = invoice_date + timedelta(days=payment_terms)
+                                receipt_month = receipt_date.replace(day=1)
+                                
+                                # Check if this receipt is in the current month
+                                if receipt_month == current_month:
+                                    # Add to receipts for this month
+                                    month_data['receipts'] += invoice_amount
+                                    if contract_type not in month_data['by_project_type']:
+                                        month_data['by_project_type'][contract_type] = {'invoices': 0, 'receipts': 0}
+                                    month_data['by_project_type'][contract_type]['receipts'] += invoice_amount
+                        except (ValueError, TypeError) as e:
+                            print(f"Error processing Monthly contract without stages in dashboard: {e}")
                 
                 # Calculate invoices and receipts for each stage
                 for stage in stages:
